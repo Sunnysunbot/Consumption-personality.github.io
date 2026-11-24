@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>当代网红消费人格测试</title>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        body {
+            background: #f8f2fb;
+            color: #333;
+            line-height: 1.6;
+            padding: 16px;
+        }
+        .container {
+            max-width: 640px;
+            margin: 0 auto;
+        }
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 16px rgba(142,102,187,0.12);
+        }
+        h1,h2,h3 {
+            color:#7b4bb2;
+            margin-bottom:12px;
+        }
+        .desc{
+            color:#666;
+            margin-bottom:20px;
+        }
+        .progress-wrap{
+            margin:16px 0 24px;
+        }
+        .progress-bar{
+            height:10px;
+            width:0%;
+            background:linear-gradient(90deg,#b87ed8,#e898c4);
+            border-radius:99px;
+            transition: width 0.3s;
+        }
+        .question{
+            margin-bottom:28px;
+        }
+        .q-title{
+            font-weight:600;
+            margin-bottom:12px;
+        }
+        .option-item{
+            padding:12px 14px;
+            border:1px solid #e2d4ee;
+            border-radius:12px;
+            margin:8px 0;
+            cursor:pointer;
+            transition:0.2s;
+        }
+        .option-item:hover{
+            background:#f3eaf9;
+        }
+        .option-item.selected{
+            background:#e9dcf4;
+            border-color:#b87ed8;
+        }
+        button{
+            width:100%;
+            padding:14px;
+            border:none;
+            border-radius:12px;
+            font-size:16px;
+            font-weight:600;
+            cursor:pointer;
+            margin:8px 0;
+        }
+        .btn-primary{
+            background:linear-gradient(90deg,#9d65cb,#d488bc);
+            color:#fff;
+        }
+        .btn-secondary{
+            background:#f0e6f8;
+            color:#7b4bb2;
+        }
+        /* 分享海报 */
+        #posterWrap{
+            width:100%;
+            max-width:420px;
+            margin:20px auto;
+            background:linear-gradient(160deg,#b87ed8,#e796c3);
+            color:white;
+            border-radius:24px;
+            padding:32px 24px;
+        }
+        .poster-title{
+            text-align:center;
+            font-size:20px;
+            font-weight:bold;
+            margin-bottom:20px;
+        }
+        .poster-tag{
+            background:rgba(255,255,255,0.22);
+            border-radius:99px;
+            display:inline-block;
+            padding:6px 12px;
+            margin:4px 2px;
+        }
+        .poster-desc{
+            margin-top:16px;
+            background:rgba(255,255,255,0.15);
+            padding:14px;
+            border-radius:14px;
+        }
+        .poster-footer{
+            margin-top:24px;
+            text-align:center;
+            font-size:13px;
+            opacity:0.85;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- 首页介绍 -->
+    <div id="pageIntro" class="page active">
+        <div class="card">
+            <h1>🛒当代网红消费人格测试</h1>
+            <div class="desc">共8道选择题，请选择最符合你真实状态的选项，不要选“应该怎么做”。<br>趣味测试无好坏，只反映你的消费模式。</div>
+            <button class="btn-primary" onclick="goTest()">开始测试</button>
+        </div>
+    </div>
+
+    <!-- 答题页 -->
+    <div id="pageTest" class="page">
+        <div class="card">
+            <h2>请完成下面8道题目</h2>
+            <div class="progress-wrap">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div id="questionsBox"></div>
+            <button class="btn-primary" onclick="submitAnswer()">查看测试结果</button>
+            <button class="btn-secondary" onclick="resetAll()">重新开始</button>
+        </div>
+    </div>
+
+    <!-- 结果页 -->
+    <div id="pageResult" class="page">
+        <div class="card">
+            <h2>✨你的消费人格结果</h2>
+            <div id="resultText"></div>
+        </div>
+        <div id="posterWrap">
+            <div class="poster-title">🛒消费人格测试</div>
+            <div id="posterContent"></div>
+            <div class="poster-footer">测测你的消费人格｜分享给你的搭子</div>
+        </div>
+        <button class="btn-primary" onclick="downloadPoster()">📥下载分享海报PNG</button>
+        <button class="btn-secondary" onclick="resetAll()">🔁重新测试</button>
+    </div>
+</div>
+
+<script>
+// 人格库
+const personalityList = [
+  {"name":"钱包守门员","emoji":"🛡️","keyword":"克制","desc":"消费界的克制派，诱惑再多也很难动摇，非必要一分不花，守住钱包是第一使命。","tip":"别人种草，你负责劝退自己。"},
+  {"name":"差评考古员","emoji":"🔍","keyword":"避雷","desc":"差评深度爱好者，不迷信好评，风险优先，只要有硬伤直接pass，主打一个稳。","tip":"别人看买家秀，你专门挖踩雷血泪史。"},
+  {"name":"质感收藏家","emoji":"🪵","keyword":"耐用品","desc":"宁缺毋滥，拒绝一次性廉价货，愿意为长久耐用、好材质买单，少而精。","tip":"宁愿贵一点，也不想频繁换破烂。"},
+  {"name":"颜值鉴赏官","emoji":"💐","keyword":"审美","desc":"颜值即正义，东西好不好用可以让步，丑的再划算也入不了你的眼。","tip":"颜值不到位，一切免谈。"},
+  {"name":"快递拆箱家","emoji":"📦","keyword":"期待感","desc":"快乐在等待和拆箱那一瞬间，下单的期待感大于物品本身，到手热情火速降温。","tip":"爱的是拆快递，不是快递里的东西。"},
+  {"name":"健身梦想家","emoji":"🎽","keyword":"仪式感","desc":"装备先行选手，买就等于拥有，全套装备到位，仿佛目标已经达成，很容易闲置。","tip":"装备全齐，爱好随缘。"},
+  {"name":"情绪型买家","emoji":"🧸","keyword":"冲动","desc":"消费是情绪解药，开心、烦躁、无聊都靠下单治愈，冲动是常态。","tip":"下单一瞬间，烦恼直接清零。"},
+  {"name":"攻略型买家","emoji":"🧮","keyword":"比价","desc":"比价卷王，满减、优惠券、渠道摸得清清楚楚，拿下最低价成就感爆棚。","tip":"买东西的快乐，一半来自薅羊毛。"},
+  {"name":"体验型买家","emoji":"✈️","keyword":"感受","desc":"不爱囤积实物，愿意为感受买单，旅行、美食、演出，回忆比物品值钱。","tip":"不囤货，只囤快乐记忆。"},
+  {"name":"纯过日子人","emoji":"🧺","keyword":"刚需","desc":"刚需至上，拒绝溢价，只买生活必需，精打细算，务实第一名。","tip":"一切花里胡哨，在刚需面前靠边站。"}
+];
+
+// 题目配置
+const questionList = [
+    {
+        title:"1.刷到一件全网都在种草的好物，你的第一反应是？",
+        options:[
+            {text:"A.先翻评论区，重点扒差评，有踩雷描述直接放弃",score:["差评考古员"]},
+            {text:"B.先搜比价、找优惠券，蹲到好价才下手",score:["攻略型买家"]},
+            {text:"C.先问自己：我真的需要它吗？没必要就划走",score:["钱包守门员"]},
+            {text:"D.一眼先看图片外观，长得不好看就完全失去兴趣",score:["颜值鉴赏官"]}
+        ]
+    },
+    {
+        title:"2.两件同价位的商品，你更偏向选？",
+        options:[
+            {text:"A.样子好看，但用料一般、容易坏",score:["颜值鉴赏官"]},
+            {text:"B.外观普通，用料扎实、耐用，能用很久",score:["质感收藏家"]},
+            {text:"C.性价比拉满，只满足基础刚需，别的都不追求",score:["纯过日子人"]},
+            {text:"D.无所谓实物，这个钱不如去吃顿饭、看场演出",score:["体验型买家"]}
+        ]
+    },
+    {
+        title:"3.你一般什么时候最容易下单？",
+        options:[
+            {text:"A.心情不好、无聊或者太开心，花钱安抚一下自己",score:["情绪型买家"]},
+            {text:"B.看到限时折扣、直播氛围到位，忍不住冲一把",score:["情绪型买家"]},
+            {text:"C.只有东西用坏了、缺了，才会考虑买",score:["纯过日子人"]},
+            {text:"D.基本不冲动，任何时候都冷静掂量要不要买",score:["钱包守门员"]}
+        ]
+    },
+    {
+        title:"4.打算培养一个新爱好（运动、画画之类），你会？",
+        options:[
+            {text:"A.先把全套专业装备买齐，仪式感拉满再说",score:["健身梦想家"]},
+            {text:"B.先不买装备，去体验课、试玩几次，喜欢再投入",score:["体验型买家"]},
+            {text:"C.只买最刚需的基础款，够用就行，不囤",score:["纯过日子人"]},
+            {text:"D.反复对比测评，挑耐用、质感好的款式",score:["质感收藏家"]}
+        ]
+    },
+    {
+        title:"5.收到快递拆开那一刻，你的感受是？",
+        options:[
+            {text:"A.最快乐的就是等快递、拆快递，拆完新鲜感消失得飞快",score:["快递拆箱家"]},
+            {text:"B.仔细检查做工细节，看值不值这个价",score:["质感收藏家"]},
+            {text:"C.核对一下，和图片一致、没瑕疵就ok，不纠结",score:["纯过日子人"]},
+            {text:"D.随手放一边，没有特别期待，本来买的时候就很理性",score:["钱包守门员"]}
+        ]
+    },
+    {
+        title:"6.一个小东西很便宜，但并不是你的刚需，你会？",
+        options:[
+            {text:"A.便宜也不买，没用的东西再便宜也是浪费",score:["钱包守门员"]},
+            {text:"B.看着可爱好看，忍不住顺手拿下",score:["颜值鉴赏官"]},
+            {text:"C.先搜下别人的评价，看看会不会踩坑再决定",score:["差评考古员"]},
+            {text:"D.不买实物，省下的钱留着出去玩、探店",score:["体验型买家"]}
+        ]
+    },
+    {
+        title:"7.同样的预算，你优先把钱花在哪？",
+        options:[
+            {text:"A.美食、旅行、演出、剧本杀这类体验项目",score:["体验型买家"]},
+            {text:"B.精致好看的摆件、穿搭、高颜值小物件",score:["颜值鉴赏官"]},
+            {text:"C.经久耐用、能长期陪伴自己的物品",score:["质感收藏家"]},
+            {text:"D.日常柴米油盐，生活必需品，别的暂不考虑",score:["纯过日子人"]}
+        ]
+    },
+    {
+        title:"8.关于买东西做功课，你属于？",
+        options:[
+            {text:"A.每条差评仔细研读，避雷优先于性价比",score:["差评考古员"]},
+            {text:"B.到处比价、算满减，买到最低价很有成就感",score:["攻略型买家"]},
+            {text:"C.不爱做功课，情绪上来直接下单",score:["情绪型买家"]},
+            {text:"D.为爱好直接买全套装备，功课随便看看",score:["健身梦想家"]}
+        ]
+    }
+];
+
+let userAnswers = Array(questionList.length).fill(null);
+
+// 渲染题目
+function renderQuestions(){
+    const box = document.getElementById("questionsBox");
+    box.innerHTML = "";
+    questionList.forEach((q,qIdx)=>{
+        const divQ = document.createElement("div");
+        divQ.className = "question";
+        divQ.innerHTML = `<div class="q-title">${q.title}</div>`;
+        q.options.forEach((opt,oIdx)=>{
+            const divOpt = document.createElement("div");
+            divOpt.className = "option-item";
+            divOpt.innerText = opt.text;
+            if(userAnswers[qIdx] === oIdx) divOpt.classList.add("selected");
+            divOpt.onclick = ()=>{
+                userAnswers[qIdx] = oIdx;
+                renderQuestions();
+                updateProgress();
+            };
+            divQ.appendChild(divOpt);
+        })
+        box.appendChild(divQ);
+    })
+    updateProgress();
+}
+
+function updateProgress(){
+    const done = userAnswers.filter(i=>i!==null).length;
+    const pct = (done / questionList.length)*100;
+    document.getElementById("progressBar").style.width = pct + "%";
+}
+
+function goTest(){
+    switchPage("pageIntro","pageTest");
+    renderQuestions();
+}
+
+function switchPage(hideId,showId){
+    document.getElementById(hideId).classList.remove("active");
+    document.getElementById(showId).classList.add("active");
+}
+
+function submitAnswer(){
+    if(userAnswers.some(x=>x===null)){
+        alert("请完成全部8道题目！");
+        return;
+    }
+    //初始化分数
+    let scoreMap = {};
+    personalityList.forEach(p=>scoreMap[p.name]=0);
+    //计分
+    questionList.forEach((q,qIdx)=>{
+        const oIdx = userAnswers[qIdx];
+        const opt = q.options[oIdx];
+        opt.score.forEach(name=>{
+            scoreMap[name] +=1;
+        })
+    })
+    //排序
+    let sorted = personalityList.map(p=>({...p,score:scoreMap[p.name]}))
+        .filter(i=>i.score>0)
+        .sort((a,b)=>b.score - a.score);
+
+    const mainPersons = [];
+    const subPerson = sorted.length>=3 ? sorted[2] : null;
+    const topScore = sorted[0].score;
+    for(let i=0;i<sorted.length;i++){
+        if(sorted[i].score === topScore) mainPersons.push(sorted[i]);
+        else if(mainPersons.length <2 && sorted[i].score>0) mainPersons.push(sorted[i]);
+        else break;
+    }
+
+    //渲染文字结果
+    let htmlText = `<div style="margin:12px 0;">`;
+    htmlText += `<p><strong>你的消费人格：</strong>【${mainPersons.map(x=>x.emoji+x.name).join(" + ")}】`;
+    if(subPerson) htmlText += `｜次要标签：${subPerson.emoji}${subPerson.name}`;
+    htmlText += `</p>`;
+    mainPersons.forEach(mp=>{
+        htmlText += `<div style="margin:10px 0;padding:10px;background:#f8f2fb;border-radius:12px;">
+        <strong>${mp.emoji} ${mp.name}（${mp.keyword}）</strong>
+        <p>${mp.desc}</p>
+        <p style="color:#888">💬${mp.tip}</p>
+        </div>`
+    })
+    if(subPerson){
+        htmlText += `<div style="margin:10px 0;padding:10px;background:#f8f2fb;border-radius:12px;">
+        <strong>次要标签：${subPerson.emoji} ${subPerson.name}（${subPerson.keyword}）</strong>
+        <p>${subPerson.desc}</p>
+        <p style="color:#888">💬${subPerson.tip}</p>
+        </div>`
+    }
+    htmlText += `</div>`;
+    document.getElementById("resultText").innerHTML = htmlText;
+
+    //渲染海报
+    let posterHtml = `<div>`;
+    posterHtml += `<div>`;
+    mainPersons.forEach(mp=>posterHtml += `<span class="poster-tag">${mp.emoji}${mp.name}</span>`);
+    if(subPerson) posterHtml += `<span class="poster-tag">次要:${subPerson.emoji}${subPerson.name}</span>`;
+    posterHtml += `</div>`;
+    posterHtml += `<div class="poster-desc">`;
+    mainPersons.forEach(mp=>{
+        posterHtml += `<p>▫${mp.name}：${mp.tip}</p>`
+    })
+    posterHtml += `</div></div>`;
+    document.getElementById("posterContent").innerHTML = posterHtml;
+
+    switchPage("pageTest","pageResult");
+}
+
+//下载海报
+async function downloadPoster(){
+    const dom = document.getElementById("posterWrap");
+    try{
+        const canvas = await html2canvas(dom,{scale:2,backgroundColor:null});
+        const link = document.createElement("a");
+        link.download = "消费人格测试海报.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    }catch(e){
+        alert("下载失败，可以直接截图保存海报区域");
+    }
+}
+
+function resetAll(){
+    userAnswers = Array(questionList.length).fill(null);
+    switchPage(document.querySelector(".page.active").id,"pageIntro");
+}
+</script>
+</body>
+</html>
